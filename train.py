@@ -64,28 +64,37 @@ def elapsed_time(start):
     return "%dmin %dsec" % (min, sec)
 
 
+parameters = find_parameters()
+if parameters != -1:
+    print("Founded parameters for model, do you want load it? (Y/N)")
+    x = input()
+    if x == 'Y' or x == 'y':
+        rnn.load_state_dict(torch.load(*parameters), strict=False)
+        model_parameters_loaded = True
 
-start = time.time()
+if model_parameters_loaded == False:
+    start = time.time()
 
-for i in range(1, number_of_iterations + 1):
-    category, line, category_tensor, line_tensor = get_random_line()
-    output, loss = train_rnn(category_tensor, line_tensor)
+    for i in range(1, number_of_iterations + 1):
+        category, line, category_tensor, line_tensor = get_random_line()
+        output, loss = train_rnn(category_tensor, line_tensor)
 
-    current_loss += loss
+        current_loss += loss
 
-    if i % print_gap == 0:
-        guess, guess_val = category_from_output(output)
-        if guess == category:
-            result = "/ Correct"
-        else:
-            result = "/ Incorrect (%s)" % category
-        print('%d %d%% (%s) / %.4f %s / %s %s' % (i, i / number_of_iterations * 100, elapsed_time(start), loss, line,
-                                                    guess, result))
+        if i % print_gap == 0:
+            guess, guess_val = category_from_output(output)
+            if guess == category:
+                result = "/ Correct"
+            else:
+                result = "/ Incorrect (%s)" % category
+            print('%d %d%% (%s) / %.4f %s / %s %s' % (i, i / number_of_iterations * 100, elapsed_time(start), loss,
+                                                      line, guess, result))
 
-        if i % plot_gap == 0:
-            all_losses.append(current_loss / plot_gap)
-            current_loss = 0
+            if i % plot_gap == 0:
+                all_losses.append(current_loss / plot_gap)
+                current_loss = 0
 
+    torch.save(rnn.state_dict(), "parameters.pth")
 
 def evaluate(line_tensor):
     hidden = rnn.init_hidden()

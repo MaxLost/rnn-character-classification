@@ -33,6 +33,14 @@ def line_to_tensor(line):
     return tensor
 
 
+def find_parameters():
+    path = files_list('parameters.pth')
+    if path == []:
+        return -1
+    else:
+        return path
+
+
 for filename in files_list('data/names/*.txt'):
     category = os.path.splitext(os.path.basename(filename))[0]
     all_categories.append(category)

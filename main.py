@@ -3,10 +3,12 @@ import matplotlib.ticker as ticker
 from train import *
 from predict import predict
 
+
 predict("Stern")
 predict("Starovoytov")
 predict("Ken")
 
-plt.figure()
-plt.plot(all_losses)
-plt.show()
+if model_parameters_loaded == False:
+    plt.figure()
+    plt.plot(all_losses)
+    plt.show()
