@@ -34,7 +34,7 @@ def line_to_tensor(line):
 
 
 def find_parameters():
-    path = files_list('parameters.pth')
+    path = files_list('rnn_parameters.pth')
     if path == []:
         return -1
     else:

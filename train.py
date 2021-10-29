@@ -1,8 +1,10 @@
 import random
 import time
-import math
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from rnn_model import *
 from data_loader import *
+from predict import evaluate
 
 # GLOBAL TRAINING PARAMETERS
 hidden_size = 128
@@ -11,11 +13,9 @@ print_gap = 5000
 plot_gap = 1000
 learning_rate = 0.007
 
-
-# INITIALIZATION
+# INITIALIZATION OF RNN MODEL
 rnn = RNN(len(all_letters), hidden_size, len(all_categories))
 criterion = nn.NLLLoss()
-
 
 current_loss = 0
 all_losses = []
@@ -64,42 +64,57 @@ def elapsed_time(start):
     return "%dmin %dsec" % (min, sec)
 
 
-parameters = find_parameters()
-if parameters != -1:
-    print("Founded parameters for model, do you want load it? (Y/N)")
-    x = input()
-    if x == 'Y' or x == 'y':
-        rnn.load_state_dict(torch.load(*parameters), strict=False)
-        model_parameters_loaded = True
+# TRAINING MODEL
+start = time.time()
 
-if model_parameters_loaded == False:
-    start = time.time()
+for i in range(1, number_of_iterations + 1):
+    category, line, category_tensor, line_tensor = get_random_line()
+    output, loss = train_rnn(category_tensor, line_tensor)
 
-    for i in range(1, number_of_iterations + 1):
-        category, line, category_tensor, line_tensor = get_random_line()
-        output, loss = train_rnn(category_tensor, line_tensor)
+    current_loss += loss
 
-        current_loss += loss
-
-        if i % print_gap == 0:
-            guess, guess_val = category_from_output(output)
-            if guess == category:
-                result = "/ Correct"
-            else:
-                result = "/ Incorrect (%s)" % category
-            print('%d %d%% (%s) / %.4f %s / %s %s' % (i, i / number_of_iterations * 100, elapsed_time(start), loss,
+    if i % print_gap == 0:
+        guess, guess_val = category_from_output(output)
+        if guess == category:
+            result = "/ Correct"
+        else:
+            result = "/ Incorrect (%s)" % category
+        print('%d %d%% (%s) / %.4f %s / %s %s' % (i, i / number_of_iterations * 100, elapsed_time(start), loss,
                                                       line, guess, result))
 
-            if i % plot_gap == 0:
-                all_losses.append(current_loss / plot_gap)
-                current_loss = 0
+        if i % plot_gap == 0:
+            all_losses.append(current_loss / plot_gap)
+            current_loss = 0
 
-    torch.save(rnn.state_dict(), "parameters.pth")
+torch.save(rnn.state_dict(), "rnn_parameters.pth")
 
-def evaluate(line_tensor):
-    hidden = rnn.init_hidden()
 
-    for i in range(line_tensor.size()[0]):
-        output, hidden = rnn(line_tensor[i], hidden)
+# CREATING PLOTS
+plt.figure()
+plt.plot(all_losses)
 
-    return output
+confusion = torch.zeros(len(all_categories), len(all_categories))
+n_confusion = 10000
+
+for i in range(n_confusion):
+    category, line, category_tensor, line_tensor = get_random_line()
+    output = evaluate(line_tensor)
+    guess, guess_i = category_from_output(output)
+    category_i = all_categories.index(category)
+    confusion[category_i][guess_i] += 1
+
+for i in range(len(all_categories)):
+    confusion[i] = confusion[i] / confusion[i].sum()
+
+fig = plt.figure()
+ax = fig.add_subplot(111)
+cax = ax.matshow(confusion.numpy())
+fig.colorbar(cax)
+
+ax.set_xticklabels([''] + all_categories, rotation=90)
+ax.set_yticklabels([''] + all_categories)
+
+ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+
+plt.show()
