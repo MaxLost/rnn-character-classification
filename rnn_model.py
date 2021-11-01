@@ -16,6 +16,7 @@ class RNN(nn.Module):
         combined = torch.cat((input, hidden), 1)
         hidden = self.to_hidden_layer(combined)
         output = self.to_output(combined)
+        #print(hidden)
         output = self.softmax(output)
         return output, hidden
 

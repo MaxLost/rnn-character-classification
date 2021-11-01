@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 from rnn_model import *
 from data_loader import *
-from predict import evaluate
 
 # GLOBAL TRAINING PARAMETERS
 hidden_size = 128
@@ -98,7 +97,11 @@ n_confusion = 10000
 
 for i in range(n_confusion):
     category, line, category_tensor, line_tensor = get_random_line()
-    output = evaluate(line_tensor)
+    hidden = rnn.init_hidden()
+
+    for i in range(line_tensor.size()[0]):
+        output, hidden = rnn(line_tensor[i], hidden)
+
     guess, guess_i = category_from_output(output)
     category_i = all_categories.index(category)
     confusion[category_i][guess_i] += 1
