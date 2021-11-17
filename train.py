@@ -10,7 +10,7 @@ hidden_size = 128
 number_of_iterations = 10**5
 print_gap = 5000
 plot_gap = 1000
-learning_rate = 0.007
+learning_rate = 0.0055
 
 # INITIALIZATION OF RNN MODEL
 rnn = RNN(len(all_letters), hidden_size, len(all_categories))
@@ -94,6 +94,7 @@ plt.plot(all_losses)
 
 confusion = torch.zeros(len(all_categories), len(all_categories))
 n_confusion = 10000
+number_of_confusions = 0
 
 for i in range(n_confusion):
     category, line, category_tensor, line_tensor = get_random_line()
@@ -104,7 +105,13 @@ for i in range(n_confusion):
 
     guess, guess_i = category_from_output(output)
     category_i = all_categories.index(category)
+
+    if guess_i != category_i:
+        number_of_confusions += 1
+
     confusion[category_i][guess_i] += 1
+
+print("RNN accuracy:", 100-(number_of_confusions/n_confusion)*100, "%")
 
 for i in range(len(all_categories)):
     confusion[i] = confusion[i] / confusion[i].sum()

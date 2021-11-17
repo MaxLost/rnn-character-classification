@@ -8,15 +8,22 @@ class RNN(nn.Module):
 
         self.hidden_size = hidden_size
 
-        self.to_hidden_layer = nn.Linear(input_size + hidden_size, hidden_size)
-        self.to_output = nn.Linear(input_size + hidden_size, output_size)
+        self.to_hidden_layer = nn.Sequential(
+            nn.Linear(input_size + hidden_size, hidden_size*2),
+            nn.ReLU(),
+            nn.Linear(hidden_size*2, hidden_size)
+        )
+        self.to_output = nn.Sequential(
+            nn.Linear(input_size + hidden_size, hidden_size*2),
+            nn.ReLU(),
+            nn.Linear(hidden_size*2, output_size)
+        )
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, input, hidden):
         combined = torch.cat((input, hidden), 1)
         hidden = self.to_hidden_layer(combined)
         output = self.to_output(combined)
-        #print(hidden)
         output = self.softmax(output)
         return output, hidden
 
